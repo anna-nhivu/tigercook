@@ -1,0 +1,387 @@
+/* ===== WRAPPER (makes footer always stick to bottom) ===== */
+.ai-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* ===== PAGE ===== */
+.ai-page {
+  flex: 1;
+  background-color: #FFF9F0;
+  background-image:
+    radial-gradient(ellipse 50% 40% at 95% 5%,  rgba(251,146,60,0.10) 0%, transparent 65%),
+    radial-gradient(ellipse 40% 35% at 5%  90%, rgba(245,158,11,0.08) 0%, transparent 60%);
+  padding: 36px 40px 48px;
+}
+
+.ai-container {
+  max-width: 1100px;
+  margin: auto;
+}
+
+/* ===== TOP BAR ===== */
+.ai-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 28px;
+}
+
+.ai-top-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ai-breadcrumb {
+  font-size: 13px;
+  color: #bbb;
+}
+
+.ai-breadcrumb-sep {
+  font-size: 13px;
+  color: #ddd;
+}
+
+.ai-top h2 {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+/* Top buttons */
+.ai-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-save,
+.btn-regenerate {
+  padding: 9px 20px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-save {
+  background: white;
+  border: 1.5px solid #f59e0b;
+  color: #f59e0b;
+}
+
+.btn-save:hover {
+  background: #f59e0b;
+  color: white;
+}
+
+.btn-regenerate {
+  background: white;
+  border: 1.5px solid #e5e5e5;
+  color: #666;
+}
+
+.btn-regenerate:hover {
+  border-color: #ccc;
+  color: #333;
+}
+
+/* ===== MAIN GRID ===== */
+.ai-content {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 22px;
+  align-items: start;
+}
+
+/* ===== INGREDIENTS CARD ===== */
+.ingredients-card {
+  background: white;
+  border-radius: 18px;
+  padding: 24px;
+  border: 1px solid #f0ece6;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  position: sticky;
+  top: 24px;
+}
+
+.ingredients-card h3 {
+  font-size: 15px;
+  font-weight: 700;
+  color: #f59e0b;
+  margin: 0 0 18px 0;
+}
+
+.ingredients-card ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.ingredients-card ul li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 9px 0;
+  border-bottom: 1px solid #faf7f3;
+  font-size: 13.5px;
+}
+
+.ingredients-card ul li:last-child {
+  border-bottom: none;
+}
+
+.ing-name   { font-weight: 500; color: #333; }
+.ing-amount { color: #aaa; font-size: 12.5px; }
+
+.grocery-divider {
+  height: 1px;
+  background: #f5f0ea;
+  margin: 18px 0 14px;
+}
+
+.grocery-label {
+  font-size: 13px;
+  color: #888;
+  margin: 0 0 10px 0;
+}
+
+/* Grocery buttons */
+.grocery-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.grocery-buttons button {
+  padding: 11px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  font-size: 13.5px;
+  font-weight: 600;
+  transition: opacity 0.2s, transform 0.15s;
+}
+
+.grocery-buttons button:hover {
+  opacity: 0.88;
+  transform: translateY(-1px);
+}
+
+.walmart { background: #2563eb; color: white; }
+.kroger  { background: #1e3a8a; color: white; }
+
+/* ===== RIGHT COLUMN ===== */
+.ai-right {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ===== RECIPE CARD ===== */
+.recipe-card {
+  background: white;
+  border-radius: 18px;
+  padding: 28px;
+  border: 1px solid #f0ece6;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+}
+
+.recipe-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  gap: 16px;
+}
+
+.recipe-card h3 {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 8px 0;
+}
+
+.recipe-desc {
+  font-size: 14px;
+  color: #888;
+  margin: 0;
+  line-height: 1.55;
+}
+
+.recipe-badge {
+  background: rgba(245,158,11,0.10);
+  color: #f59e0b;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 999px;
+  white-space: nowrap;
+  align-self: flex-start;
+}
+
+/* ── META ROW (the fix!) ── */
+.recipe-meta {
+  display: flex;
+  align-items: center;
+  background: #fdf9f3;
+  border-radius: 14px;
+  padding: 20px 0;
+  border: 1px solid #f5ede0;
+}
+
+.meta-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  text-align: center;
+}
+
+.meta-icon-wrap {
+  font-size: 22px;
+  line-height: 1;
+  margin-bottom: 2px;
+}
+
+.meta-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  color: #bbb;
+  text-transform: uppercase;
+}
+
+.meta-value {
+  font-size: 17px;
+  font-weight: 700;
+  color: #f59e0b;
+}
+
+/* Thin vertical divider between meta items */
+.meta-divider {
+  width: 1px;
+  height: 40px;
+  background: #ecdfc8;
+  flex-shrink: 0;
+}
+
+/* ===== STEPS CARD ===== */
+.steps-card {
+  background: white;
+  border-radius: 18px;
+  padding: 28px;
+  border: 1px solid #f0ece6;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+}
+
+.steps-card h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 20px 0;
+}
+
+.steps-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.steps-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  font-size: 14px;
+  color: #444;
+  line-height: 1.6;
+}
+
+.step-num {
+  min-width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f59e0b, #fb923c);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(245,158,11,0.30);
+}
+
+.step-text { padding-top: 3px; }
+
+/* ===== NUTRITION CARD ===== */
+.nutrition-card {
+  background: white;
+  border-radius: 18px;
+  padding: 28px;
+  border: 1px solid #f0ece6;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+}
+
+.nutrition-card h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 4px 0;
+}
+
+.nutrition-sub {
+  font-size: 12px;
+  color: #bbb;
+  margin: 0 0 18px 0;
+}
+
+.nutrition-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+
+.nutrition-box {
+  border-radius: 14px;
+  padding: 18px 12px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.nutrition-box strong {
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.nutrition-box span {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* Individual nutrition color themes */
+.nutrition-box.calories { background: #fff3e0; }
+.nutrition-box.calories strong { color: #f57c00; }
+.nutrition-box.calories span   { color: #e65100; }
+
+.nutrition-box.protein  { background: #e8f5e9; }
+.nutrition-box.protein  strong { color: #388e3c; }
+.nutrition-box.protein  span   { color: #2e7d32; }
+
+.nutrition-box.carbs    { background: #e3f2fd; }
+.nutrition-box.carbs    strong { color: #1976d2; }
+.nutrition-box.carbs    span   { color: #1565c0; }
+
+.nutrition-box.fat      { background: #fce4ec; }
+.nutrition-box.fat      strong { color: #d81b60; }
+.nutrition-box.fat      span   { color: #ad1457; }
