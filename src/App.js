@@ -1,10 +1,14 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
-import Login from "./pages/Login";
+import Login from "./pages/Login"; 
 import Dashboard from "./pages/Dashboard";
 import Favorite from "./pages/Favorite";
 import AIResult from "./pages/AIResult";
 import GenerateRecipe from "./pages/GenerateRecipe";
+
+import Signup from "./pages/SignUp";
+import Explore from "./pages/Explore";
+import Profile from "./pages/Profile";
 
 function App() {
   return (
@@ -23,6 +27,13 @@ function App() {
         <Route path="/ai-result" element={<AIResult />} />
 
         <Route path="/generate" element={<GenerateRecipe />} />
+
+        
+        <Route path="/signup"  element={<Signup />} />
+
+        <Route path="/explore" element={<Explore />} />
+        
+        <Route path="/profile" element={<Profile />} />
 
       </Routes>
 
