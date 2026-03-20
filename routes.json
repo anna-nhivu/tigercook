@@ -1,0 +1,6 @@
+{
+  "/api/food": "/food",
+  "/api/food/:id": "/food/:id",
+  "/api/generator": "/generator",
+  "/api/login": "/login"
+}
