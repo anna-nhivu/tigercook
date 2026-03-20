@@ -48,7 +48,6 @@ export default function SignUp() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Header />
       <div className="flex-1 flex items-center justify-center p-6 relative overflow-hidden">
         <div className="absolute top-10 right-10 w-32 h-32 bg-[#FFB84D] rounded-full opacity-20 blur-3xl" />
         <div className="absolute bottom-20 left-10 w-40 h-40 bg-[#7ED957] rounded-full opacity-20 blur-3xl" />
@@ -172,7 +171,6 @@ export default function SignUp() {
           </div>
         </div>
       </div>
-      <Footer />
     </div>
   );
 }
