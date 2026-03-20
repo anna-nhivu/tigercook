@@ -1,4 +1,5 @@
-import { createBrowserRouter } from "react-router";
+import { createBrowserRouter } from "react-router-dom";
+
 import SignUp from "./pages/SignUp";
 import RecipeGenerator from "./pages/RecipeGenerator";
 import Explore from "./pages/Explore";
