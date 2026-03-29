@@ -6,6 +6,8 @@ import { Input } from "../components/ui/input.jsx";
 import { Slider } from "../components/ui/slider.jsx";
 import Header from "../components/Header.jsx";
 import Footer from "../components/Footer.jsx";
+import { db } from "../firebase.js";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 
 export default function GenerateRecipe() {
   const navigate = useNavigate();
@@ -17,6 +19,7 @@ export default function GenerateRecipe() {
   const [customDiet, setCustomDiet] = useState("");
   const [customCuisine, setCustomCuisine] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const dietOptions = [
     { value: "any", label: "Any", emoji: "🍽️" },
@@ -36,10 +39,102 @@ export default function GenerateRecipe() {
 
   const handleGenerate = async () => {
     setIsLoading(true);
-    setTimeout(() => {
+    setError("");
+
+    // Figure out the final diet and cuisine values
+    const dietValue = selectedDiet === "other" ? customDiet : selectedDiet;
+    const cuisineValue = selectedCuisine === "other" ? customCuisine : selectedCuisine;
+
+    // Build the prompt we send to OpenAI
+    const prompt = `Generate a cooking recipe with these requirements:
+- Budget: $${budget} total
+- Servings: ${portion} people
+- Dietary preference: ${dietValue}
+- Cuisine type: ${cuisineValue}
+- Cooking time: ${cookingTime} minutes max
+- Give exactly 5-7 cooking steps, each step should be short (1 sentence max), clear, and specific like a real recipe book
+
+Return your response in this EXACT JSON format and nothing else:
+{
+  "title": "Recipe Name",
+  "description": "A short 1-2 sentence description",
+  "ingredients": [
+    { "name": "ingredient name", "amount": "amount with unit" }
+  ],
+  "steps": [
+    "Step 1 short instruction",
+    "Step 2 short instruction",
+    "Step 3 short instruction",
+    "Step 4 short instruction",
+    "Step 5 short instruction"
+  ],
+  "time": "X min",
+  "cost": "$X.XX",
+  "servings": ${portion},
+  "tag": "one word tag like Vegan or Spicy or Healthy",
+  "nutrition": {
+    "calories": 000,
+    "protein": "Xg",
+    "carbs": "Xg",
+    "fat": "Xg"
+  }
+}`;
+
+    try {
+      // Call OpenAI API
+      const response = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: "gpt-3.5-turbo",
+          messages: [
+            {
+              role: "user",
+              content: prompt,
+            },
+          ],
+          temperature: 0.7,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("OpenAI API call failed");
+      }
+
+      const data = await response.json();
+
+      // Get the text response from OpenAI
+      const rawText = data.choices[0].message.content;
+
+      // Parse it as JSON
+      const recipe = JSON.parse(rawText);
+
+      // Save recipe to Firestore
+      await addDoc(collection(db, "recipes"), {
+        ...recipe,
+        budget,
+        portion,
+        cookingTime,
+        diet: dietValue,
+        cuisine: cuisineValue,
+        createdAt: serverTimestamp(),
+      });
+
+      // Save recipe to localStorage so AIResult page can read it
+      localStorage.setItem("currentRecipe", JSON.stringify(recipe));
+
+      // Navigate to result page
       navigate("/ai-result");
+
+    } catch (err) {
+      console.error("Error generating recipe:", err);
+      setError("Something went wrong generating your recipe. Please try again!");
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
   return (
@@ -48,7 +143,7 @@ export default function GenerateRecipe() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm">
           <div className="flex flex-col items-center gap-4 rounded-2xl bg-white px-10 py-8 shadow-xl">
             <div className="h-12 w-12 animate-spin rounded-full border-4 border-[#FFF0E0] border-t-[#FF7A00]" />
-            <p className="text-gray-600 font-semibold">Loading</p>
+            <p className="text-gray-600 font-semibold">Generating your recipe with AI...</p>
           </div>
         </div>
       )}
@@ -59,6 +154,12 @@ export default function GenerateRecipe() {
           <h1 className="text-3xl mb-2 font-extrabold">AI Recipe Generator ✨</h1>
           <p className="text-gray-600">Tell us your preferences and we'll create the perfect recipe</p>
         </div>
+
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
+            {error}
+          </div>
+        )}
 
         <div className="bg-white rounded-2xl shadow-sm p-8 space-y-6">
           <div className="space-y-3">
