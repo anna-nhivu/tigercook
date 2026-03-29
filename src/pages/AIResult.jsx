@@ -5,51 +5,55 @@ import { useNavigate } from "react-router-dom";
 function AIResult() {
   const navigate = useNavigate();
 
-  const recipe = {
-    title: "Spicy Thai Basil Noodles",
-    description:
-      "A delicious and easy Thai-inspired noodle dish with fresh basil, vegetables, and a spicy sauce.",
-    ingredients: [
-      { name: "Rice noodles", amount: "200g" },
-      { name: "Fresh Thai basil", amount: "1 cup" },
-      { name: "Bell peppers", amount: "2 medium" },
-      { name: "Garlic cloves", amount: "4 cloves" },
-      { name: "Soy sauce", amount: "3 tbsp" },
-      { name: "Oyster sauce", amount: "2 tbsp" },
-      { name: "Chili flakes", amount: "1 tsp" },
-      { name: "Sesame oil", amount: "1 tbsp" },
-    ],
-    steps: [
-      "Cook rice noodles according to package instructions. Drain and set aside.",
-      "Heat sesame oil in a large wok or pan over high heat.",
-      "Add minced garlic and stir-fry for 30 seconds until fragrant.",
-      "Add sliced bell peppers and cook for 2–3 minutes until slightly softened.",
-      "Toss in the cooked noodles, soy sauce, oyster sauce, and chili flakes. Mix well.",
-      "Add fresh Thai basil leaves. Stir-fry for another minute.",
-      "Serve hot and enjoy your delicious meal!",
-    ],
-    time: "25 min",
-    cost: "$8.50",
-    servings: 2,
-    nutrition: {
-      calories: 425,
-      protein: "12g",
-      carbs: "68g",
-      fat: "11g",
-    },
-  };
+  // Read the real recipe from localStorage (saved by GenerateRecipe.jsx)
+  const stored = localStorage.getItem("currentRecipe");
+  const recipe = stored ? JSON.parse(stored) : null;
+
+  // If no recipe found, show a message
+  if (!recipe) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <Header />
+        <main className="flex-1 flex flex-col items-center justify-center gap-4">
+          <div className="text-[52px]">🍽️</div>
+          <h2 className="text-xl font-bold text-[#1a1a1a]">No recipe generated yet</h2>
+          <p className="text-sm text-[#888]">Go generate a recipe first!</p>
+          <button
+            onClick={() => navigate("/generate")}
+            className="py-3 px-7 rounded-full text-white text-[15px] font-semibold cursor-pointer"
+            style={{ background: "linear-gradient(135deg, #f59e0b, #fb923c)" }}
+          >
+            Generate a Recipe →
+          </button>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   const saveRecipe = () => {
     const existing = JSON.parse(localStorage.getItem("favorites")) || [];
+    // Avoid saving duplicates
+    const alreadySaved = existing.some((r) => r.title === recipe.title);
+    if (alreadySaved) {
+      alert("Recipe already saved to favorites!");
+      return;
+    }
     existing.push(recipe);
     localStorage.setItem("favorites", JSON.stringify(existing));
     alert("Recipe saved to favorites! ❤️");
   };
 
+  // Build grocery store search URLs using the first 3 ingredients
+  const searchQuery = recipe.ingredients && recipe.ingredients.length > 0
+  ? encodeURIComponent(recipe.ingredients[0].name)
+  : "ingredients";
+
   const handleWalmart = () =>
-    window.open("https://www.walmart.com/search?q=rice+noodles+thai+basil", "_blank");
+    window.open(`https://www.walmart.com/search?q=${searchQuery}`, "_blank");
   const handleKroger = () =>
-    window.open("https://www.kroger.com/search?query=rice+noodles+thai+basil", "_blank");
+    window.open(`https://www.kroger.com/search?query=${searchQuery}`, "_blank");
+
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -96,7 +100,7 @@ function AIResult() {
                 🧺 Ingredients
               </h3>
               <ul className="list-none p-0 m-0">
-                {recipe.ingredients.map((item, i) => (
+                {recipe.ingredients && recipe.ingredients.map((item, i) => (
                   <li
                     key={i}
                     className="flex justify-between items-center py-2 border-b border-[#faf7f3] text-[13.5px] last:border-b-0"
@@ -121,6 +125,7 @@ function AIResult() {
                 >
                   🛒 Buy at Kroger
                 </button>
+
               </div>
             </aside>
 
@@ -135,9 +140,11 @@ function AIResult() {
                       {recipe.description}
                     </p>
                   </div>
-                  <span className="bg-[rgba(245,158,11,0.10)] text-[#f59e0b] text-xs font-semibold py-1 px-3 rounded-full whitespace-nowrap self-start">
-                    🌶️ Spicy
-                  </span>
+                  {recipe.tag && (
+                    <span className="bg-[rgba(245,158,11,0.10)] text-[#f59e0b] text-xs font-semibold py-1 px-3 rounded-full whitespace-nowrap self-start">
+                      {recipe.tag}
+                    </span>
+                  )}
                 </div>
                 <div className="flex items-center bg-[#fdf9f3] rounded-[14px] py-5 border border-[#f5ede0]">
                   <div className="flex-1 flex flex-col items-center gap-1 text-center">
@@ -177,7 +184,7 @@ function AIResult() {
                   👨‍🍳 Cooking Steps
                 </h3>
                 <ol className="list-none p-0 m-0 flex flex-col gap-3.5">
-                  {recipe.steps.map((step, i) => (
+                  {recipe.steps && recipe.steps.map((step, i) => (
                     <li key={i} className="flex items-start gap-3.5 text-sm text-[#444] leading-[1.6]">
                       <span
                         className="min-w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0 shadow-[0_2px_6px_rgba(245,158,11,0.30)]"
@@ -193,38 +200,40 @@ function AIResult() {
                 </ol>
               </div>
 
-              <div className="bg-white rounded-[18px] p-7 border border-[#f0ece6] shadow-[0_2px_12px_rgba(0,0,0,0.04)]">
-                <h3 className="text-base font-bold text-[#1a1a1a] m-0 mb-1">
-                  📊 Nutrition Information
-                </h3>
-                <p className="text-xs text-[#bbb] m-0 mb-4">Per serving · estimated</p>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
-                  <div className="rounded-[14px] py-4 px-3 text-center flex flex-col gap-1 bg-[#fff3e0]">
-                    <strong className="text-2xl font-extrabold leading-none text-[#f57c00]">
-                      {recipe.nutrition.calories}
-                    </strong>
-                    <span className="text-xs font-medium text-[#e65100]">Calories</span>
-                  </div>
-                  <div className="rounded-[14px] py-4 px-3 text-center flex flex-col gap-1 bg-[#e8f5e9]">
-                    <strong className="text-2xl font-extrabold leading-none text-[#388e3c]">
-                      {recipe.nutrition.protein}
-                    </strong>
-                    <span className="text-xs font-medium text-[#2e7d32]">Protein</span>
-                  </div>
-                  <div className="rounded-[14px] py-4 px-3 text-center flex flex-col gap-1 bg-[#e3f2fd]">
-                    <strong className="text-2xl font-extrabold leading-none text-[#1976d2]">
-                      {recipe.nutrition.carbs}
-                    </strong>
-                    <span className="text-xs font-medium text-[#1565c0]">Carbs</span>
-                  </div>
-                  <div className="rounded-[14px] py-4 px-3 text-center flex flex-col gap-1 bg-[#fce4ec]">
-                    <strong className="text-2xl font-extrabold leading-none text-[#d81b60]">
-                      {recipe.nutrition.fat}
-                    </strong>
-                    <span className="text-xs font-medium text-[#ad1457]">Fat</span>
+              {recipe.nutrition && (
+                <div className="bg-white rounded-[18px] p-7 border border-[#f0ece6] shadow-[0_2px_12px_rgba(0,0,0,0.04)]">
+                  <h3 className="text-base font-bold text-[#1a1a1a] m-0 mb-1">
+                    📊 Nutrition Information
+                  </h3>
+                  <p className="text-xs text-[#bbb] m-0 mb-4">Per serving · estimated</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+                    <div className="rounded-[14px] py-4 px-3 text-center flex flex-col gap-1 bg-[#fff3e0]">
+                      <strong className="text-2xl font-extrabold leading-none text-[#f57c00]">
+                        {recipe.nutrition.calories}
+                      </strong>
+                      <span className="text-xs font-medium text-[#e65100]">Calories</span>
+                    </div>
+                    <div className="rounded-[14px] py-4 px-3 text-center flex flex-col gap-1 bg-[#e8f5e9]">
+                      <strong className="text-2xl font-extrabold leading-none text-[#388e3c]">
+                        {recipe.nutrition.protein}
+                      </strong>
+                      <span className="text-xs font-medium text-[#2e7d32]">Protein</span>
+                    </div>
+                    <div className="rounded-[14px] py-4 px-3 text-center flex flex-col gap-1 bg-[#e3f2fd]">
+                      <strong className="text-2xl font-extrabold leading-none text-[#1976d2]">
+                        {recipe.nutrition.carbs}
+                      </strong>
+                      <span className="text-xs font-medium text-[#1565c0]">Carbs</span>
+                    </div>
+                    <div className="rounded-[14px] py-4 px-3 text-center flex flex-col gap-1 bg-[#fce4ec]">
+                      <strong className="text-2xl font-extrabold leading-none text-[#d81b60]">
+                        {recipe.nutrition.fat}
+                      </strong>
+                      <span className="text-xs font-medium text-[#ad1457]">Fat</span>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>
