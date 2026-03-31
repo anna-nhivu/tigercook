@@ -1,26 +1,30 @@
 import { db } from "../firebase.js";
-import { collection, query, orderBy, getDocs } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  orderBy,
+  query,
+  where,
+} from "firebase/firestore";
 
-export async function getUserRecipes() {
+export async function getUserRecipes(userId) {
+  if (!userId) return [];
+
   try {
     const q = query(
       collection(db, "recipes"),
-      orderBy("createdAt", "desc")
+      where("userId", "==", userId),
+      orderBy("createdAt", "desc"),
     );
 
     const snapshot = await getDocs(q);
 
-    const recipes = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      recipeName: doc.data().title,
-      cost: doc.data().cost,
-      createdAt: doc.data().createdAt,
+    return snapshot.docs.map((docSnap) => ({
+      id: docSnap.id,
+      ...docSnap.data(),
     }));
-
-    return recipes;
-
   } catch (error) {
-    console.error("Error fetching recipes:", error);
+    console.error("Error fetching user recipes:", error);
     return [];
   }
 }
