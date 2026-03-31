@@ -6,8 +6,7 @@ import { Input } from "../components/ui/input.jsx";
 import { Slider } from "../components/ui/slider.jsx";
 import Header from "../components/Header.jsx";
 import Footer from "../components/Footer.jsx";
-import { db } from "../firebase.js";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { buildRecipeGenerationPrompt } from "../utils/recipeGenerationPrompt.js";
 
 export default function GenerateRecipe() {
   const navigate = useNavigate();
@@ -45,40 +44,13 @@ export default function GenerateRecipe() {
     const dietValue = selectedDiet === "other" ? customDiet : selectedDiet;
     const cuisineValue = selectedCuisine === "other" ? customCuisine : selectedCuisine;
 
-    // Build the prompt we send to OpenAI
-    const prompt = `Generate a cooking recipe with these requirements:
-- Budget: $${budget} total
-- Servings: ${portion} people
-- Dietary preference: ${dietValue}
-- Cuisine type: ${cuisineValue}
-- Cooking time: ${cookingTime} minutes max
-- Give exactly 5-7 cooking steps, each step should be short (1 sentence max), clear, and specific like a real recipe book
-
-Return your response in this EXACT JSON format and nothing else:
-{
-  "title": "Recipe Name",
-  "description": "A short 1-2 sentence description",
-  "ingredients": [
-    { "name": "ingredient name", "amount": "amount with unit" }
-  ],
-  "steps": [
-    "Step 1 short instruction",
-    "Step 2 short instruction",
-    "Step 3 short instruction",
-    "Step 4 short instruction",
-    "Step 5 short instruction"
-  ],
-  "time": "X min",
-  "cost": "$X.XX",
-  "servings": ${portion},
-  "tag": "one word tag like Vegan or Spicy or Healthy",
-  "nutrition": {
-    "calories": 000,
-    "protein": "Xg",
-    "carbs": "Xg",
-    "fat": "Xg"
-  }
-}`;
+    const prompt = buildRecipeGenerationPrompt({
+      budget,
+      portion,
+      diet: dietValue,
+      cuisine: cuisineValue,
+      cookingTime,
+    });
 
     try {
       // Call OpenAI API
@@ -112,19 +84,8 @@ Return your response in this EXACT JSON format and nothing else:
       // Parse it as JSON
       const recipe = JSON.parse(rawText);
 
-      // Save recipe to Firestore
-      await addDoc(collection(db, "recipes"), {
-        ...recipe,
-        budget,
-        portion,
-        cookingTime,
-        diet: dietValue,
-        cuisine: cuisineValue,
-        createdAt: serverTimestamp(),
-      });
-
-      // Save recipe to localStorage so AIResult page can read it
       localStorage.setItem("currentRecipe", JSON.stringify(recipe));
+      localStorage.removeItem("currentRecipeSavedToFirestore");
 
       // Navigate to result page
       navigate("/ai-result");

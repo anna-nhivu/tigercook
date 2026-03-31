@@ -1,9 +1,28 @@
+import { useEffect, useState } from "react";
 import Header from "../components/Header.jsx";
 import Footer from "../components/Footer.jsx";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth.js";
+import { getUserRecipes } from "../utils/getUserRecipes.js";
+
+function formatRecipeDate(createdAt) {
+  if (!createdAt) return "—";
+  const d = createdAt.toDate ? createdAt.toDate() : new Date(createdAt);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
+function formatCost(cost) {
+  if (cost == null) return "—";
+  if (typeof cost === "number") return `$${cost}`;
+  return String(cost);
+}
 
 function Dashboard() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+
+  const displayName = user?.displayName?.trim() || "Chef";
 
   return (
     <div className="flex flex-col min-h-screen">

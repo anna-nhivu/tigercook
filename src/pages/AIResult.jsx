@@ -1,15 +1,70 @@
+import { useState, useEffect } from "react";
 import Header from "../components/Header.jsx";
 import Footer from "../components/Footer.jsx";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import { db } from "../firebase.js";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { useAuth } from "../hooks/useAuth.js";
 
 function AIResult() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [recipe, setRecipe] = useState(null);
+  const [hydrated, setHydrated] = useState(false);
+  const [savedToFirestore, setSavedToFirestore] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  
+  const location = useLocation()
+  const isFromFavorite = location.state?.from === "favorite"
 
-  // Read the real recipe from localStorage (saved by GenerateRecipe.jsx)
-  const stored = localStorage.getItem("currentRecipe");
-  const recipe = stored ? JSON.parse(stored) : null;
+  useEffect(() => {
+    const raw = localStorage.getItem("currentRecipe");
+    if (raw) {
+      try {
+        setRecipe(JSON.parse(raw));
+      } catch {
+        setRecipe(null);
+      }
+    }
+    setSavedToFirestore(localStorage.getItem("currentRecipeSavedToFirestore") === "true");
+    setHydrated(true);
+  }, []);
 
-  // If no recipe found, show a message
+  const saveRecipe = async () => {
+    if (savedToFirestore) {
+      alert("This recipe is already saved.");
+      return;
+    }
+    setIsSaving(true);
+    try {
+      await addDoc(collection(db, "recipes"), {
+        ...recipe,
+        userId: user.uid,
+        createdAt: serverTimestamp(),
+      });
+      localStorage.setItem("currentRecipeSavedToFirestore", "true");
+      setSavedToFirestore(true);
+      alert("Recipe saved successfully.");
+    } catch (err) {
+      console.error("Error saving recipe:", err);
+      alert("Could not save the recipe. Please try again.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  if (!hydrated) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <Header />
+        <main className="flex-1 flex items-center justify-center">
+          <p className="text-gray-500 text-sm">Loading…</p>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
   if (!recipe) {
     return (
       <div className="flex flex-col min-h-screen">
@@ -31,29 +86,11 @@ function AIResult() {
     );
   }
 
-  const saveRecipe = () => {
-    const existing = JSON.parse(localStorage.getItem("favorites")) || [];
-    // Avoid saving duplicates
-    const alreadySaved = existing.some((r) => r.title === recipe.title);
-    if (alreadySaved) {
-      alert("Recipe already saved to favorites!");
-      return;
-    }
-    existing.push(recipe);
-    localStorage.setItem("favorites", JSON.stringify(existing));
-    alert("Recipe saved to favorites! ❤️");
-  };
-
-  // Build grocery store search URLs using the first 3 ingredients
-  const searchQuery = recipe.ingredients && recipe.ingredients.length > 0
-  ? encodeURIComponent(recipe.ingredients[0].name)
-  : "ingredients";
 
   const handleWalmart = () =>
-    window.open(`https://www.walmart.com/search?q=${searchQuery}`, "_blank");
+    window.open(`https://www.walmart.com/search`, "_blank");
   const handleKroger = () =>
-    window.open(`https://www.kroger.com/search?query=${searchQuery}`, "_blank");
-
+    window.open(`https://www.kroger.com/search`, "_blank");
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -72,25 +109,26 @@ function AIResult() {
         <div className="max-w-[1100px] mx-auto">
           <div className="flex justify-between items-center mb-7">
             <div className="flex items-center gap-2">
-              <span className="text-[13px] text-[#bbb]">Recipe Generator</span>
-              <span className="text-[13px] text-[#ddd]">›</span>
               <h2 className="text-[22px] font-bold text-[#1a1a1a] m-0">
-                Your Generated Recipe
+                {isFromFavorite ? 'Your Favorite Recipe' : 'Your Generated Recipe'}
               </h2>
             </div>
             <div className="flex gap-2.5">
               <button
-                className="py-2 px-5 rounded-full text-sm font-medium cursor-pointer transition-all bg-white border-[1.5px] border-[#f59e0b] text-[#f59e0b] hover:bg-[#f59e0b] hover:text-white"
+                className="py-2 px-5 rounded-full text-sm font-medium cursor-pointer transition-all bg-white border-[1.5px] border-[#f59e0b] text-[#f59e0b] hover:bg-[#f59e0b] hover:text-white disabled:opacity-60 disabled:cursor-not-allowed"
                 onClick={saveRecipe}
+                disabled={isSaving || savedToFirestore}
               >
-                🤍 Save
+                {savedToFirestore ? "✓ Saved" : isSaving ? "Saving…" : "🤍 Save"}
               </button>
-              <button
-                className="py-2 px-5 rounded-full text-sm font-medium cursor-pointer transition-all bg-white border-[1.5px] border-[#e5e5e5] text-[#666] hover:border-[#ccc] hover:text-[#333]"
-                onClick={() => navigate("/generate")}
-              >
-                ↺ Regenerate
-              </button>
+              {!isFromFavorite && (
+                <button
+                  className="py-2 px-5 rounded-full text-sm font-medium cursor-pointer transition-all bg-white border-[1.5px] border-[#e5e5e5] text-[#666] hover:border-[#ccc] hover:text-[#333]"
+                  onClick={() => navigate("/generate")}
+                >
+                  ↺ Regenerate
+                </button>
+              )}
             </div>
           </div>
 
@@ -100,15 +138,16 @@ function AIResult() {
                 🧺 Ingredients
               </h3>
               <ul className="list-none p-0 m-0">
-                {recipe.ingredients && recipe.ingredients.map((item, i) => (
-                  <li
-                    key={i}
-                    className="flex justify-between items-center py-2 border-b border-[#faf7f3] text-[13.5px] last:border-b-0"
-                  >
-                    <span className="font-medium text-[#333]">{item.name}</span>
-                    <span className="text-[#aaa] text-[12.5px]">{item.amount}</span>
-                  </li>
-                ))}
+                {recipe.ingredients &&
+                  recipe.ingredients.map((item, i) => (
+                    <li
+                      key={i}
+                      className="flex justify-between items-center py-2 border-b border-[#faf7f3] text-[13.5px] last:border-b-0"
+                    >
+                      <span className="font-medium text-[#333]">{item.name}</span>
+                      <span className="text-[#aaa] text-[12.5px]">{item.amount}</span>
+                    </li>
+                  ))}
               </ul>
               <div className="h-px bg-[#f5f0ea] my-4" />
               <p className="text-[13px] text-[#888] m-0 mb-2.5">🛒 Get ingredients:</p>
@@ -125,7 +164,6 @@ function AIResult() {
                 >
                   🛒 Buy at Kroger
                 </button>
-
               </div>
             </aside>
 
@@ -184,19 +222,23 @@ function AIResult() {
                   👨‍🍳 Cooking Steps
                 </h3>
                 <ol className="list-none p-0 m-0 flex flex-col gap-3.5">
-                  {recipe.steps && recipe.steps.map((step, i) => (
-                    <li key={i} className="flex items-start gap-3.5 text-sm text-[#444] leading-[1.6]">
-                      <span
-                        className="min-w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0 shadow-[0_2px_6px_rgba(245,158,11,0.30)]"
-                        style={{
-                          background: "linear-gradient(135deg, #f59e0b, #fb923c)",
-                        }}
+                  {recipe.steps &&
+                    recipe.steps.map((step, i) => (
+                      <li
+                        key={i}
+                        className="flex items-start gap-3.5 text-sm text-[#444] leading-[1.6]"
                       >
-                        {i + 1}
-                      </span>
-                      <span className="pt-0.5">{step}</span>
-                    </li>
-                  ))}
+                        <span
+                          className="min-w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0 shadow-[0_2px_6px_rgba(245,158,11,0.30)]"
+                          style={{
+                            background: "linear-gradient(135deg, #f59e0b, #fb923c)",
+                          }}
+                        >
+                          {i + 1}
+                        </span>
+                        <span className="pt-0.5">{step}</span>
+                      </li>
+                    ))}
                 </ol>
               </div>
 

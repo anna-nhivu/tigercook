@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, Navigate, useNavigate } from "react-router-dom";
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { Mail, Lock, ChefHat, User } from "lucide-react";
 import { Button } from "../components/ui/button.jsx";
 import { Input } from "../components/ui/input.jsx";
-import Header from "../components/Header.jsx";
-import Footer from "../components/Footer.jsx";
+import { auth } from "../firebase.js";
+import { useAuth } from "../hooks/useAuth.js";
 
 export default function SignUp() {
   const [name, setName] = useState("");
@@ -13,38 +14,82 @@ export default function SignUp() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("error");
+  const [submitting, setSubmitting] = useState(false);
+  const navigate = useNavigate();
+  const { user, loading } = useAuth();
 
   const regex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
 
-  const handleSignUp = async () => {
+  if (!loading && user) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  const handleSignUp = async (e) => {
+    e?.preventDefault?.();
+    setMessage("");
     if (name === "") {
       setMessageType("error");
       setMessage("Please fill your name!");
-    } else if (password !== confirmPassword) {
+      return;
+    }
+    if (password !== confirmPassword) {
       setMessageType("error");
       setMessage("Password and confirm password are not the same!");
-      setTimeout(() => setMessage(""), 3000);
-    } else if (!regex.test(password)) {
+      return;
+    }
+    if (!regex.test(password)) {
       setMessageType("error");
       setMessage(
-        "Password must be at least 8 characters long and contain both letters and numbers"
+        "Password must be at least 8 characters long and contain both letters and numbers",
       );
-    } else {
-      try {
-        setMessageType("success");
-        setMessage("Registered successfully!");
-        setTimeout(() => setMessage(""), 3000);
-        setName("");
-        setEmail("");
-        setPassword("");
-        setConfirmPassword("");
-      } catch (error) {
-        setMessageType("error");
-        setMessage(error.response?.data?.error || "Registration failed");
-        setTimeout(() => setMessage(""), 3000);
+      return;
+    }
+    if (!email.trim()) {
+      setMessageType("error");
+      setMessage("Please enter your email.");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await createUserWithEmailAndPassword(auth, email.trim(), password);
+      if (auth.currentUser) {
+        await updateProfile(auth.currentUser, { displayName: name.trim() });
       }
+      navigate("/dashboard");
+    } catch (error) {
+      console.error(error);
+      setMessageType("error");
+      const code = error?.code ?? "";
+      if (code === "auth/email-already-in-use") {
+        setMessage("This email is already registered.");
+      } else if (code === "auth/weak-password") {
+        setMessage("Password is too weak.");
+      } else if (code === "auth/invalid-email") {
+        setMessage("Invalid email address.");
+      } else if (code === "auth/operation-not-allowed") {
+        setMessage(
+          "Email/Password sign-in is disabled. Enable it in Firebase Console → Authentication → Sign-in method.",
+        );
+      } else if (code === "auth/invalid-api-key") {
+        setMessage("Invalid Firebase API key. Check your .env matches Project settings.");
+      } else {
+        setMessage(
+          error?.message || "Registration failed. Please try again.",
+        );
+      }
+    } finally {
+      setSubmitting(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#FFF0E0] border-t-[#FF7A00]" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -105,6 +150,7 @@ export default function SignUp() {
                       setEmail(e.target.value);
                       setMessage("");
                     }}
+                    autoComplete="email"
                     className="pl-12 h-12 rounded-xl border-2 border-gray-200 focus:border-[#FF7A00] bg-white"
                   />
                 </div>
@@ -122,6 +168,7 @@ export default function SignUp() {
                       setPassword(e.target.value);
                       setMessage("");
                     }}
+                    autoComplete="new-password"
                     className="pl-12 h-12 rounded-xl border-2 border-gray-200 focus:border-[#FF7A00] bg-white"
                   />
                 </div>
@@ -139,16 +186,19 @@ export default function SignUp() {
                       setConfirmPassword(e.target.value);
                       setMessage("");
                     }}
+                    autoComplete="new-password"
                     className="pl-12 h-12 rounded-xl border-2 border-gray-200 focus:border-[#FF7A00] bg-white"
                   />
                 </div>
               </div>
 
               <Button
+                type="button"
                 onClick={handleSignUp}
-                className="w-full h-12 rounded-xl bg-gradient-to-r from-[#FF7A00] to-[#FFB84D] hover:from-[#E66D00] hover:to-[#FFA73D] text-white font-bold"
+                disabled={submitting}
+                className="w-full h-12 rounded-xl bg-gradient-to-r from-[#FF7A00] to-[#FFB84D] hover:from-[#E66D00] hover:to-[#FFA73D] text-white font-bold disabled:opacity-60"
               >
-                Sign up
+                {submitting ? "Creating account…" : "Sign up"}
               </Button>
 
               <div className="relative my-4">
