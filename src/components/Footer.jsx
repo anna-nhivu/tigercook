@@ -8,7 +8,7 @@ function Footer() {
           <span>© {currentYear} TigerCook. All rights reserved.</span>
           <span className="text-gray-300">·</span>
           <span className="bg-gradient-to-r from-[#FF7A00] to-[#FFB84D] bg-clip-text text-transparent font-semibold">
-            Created by Hoan Nguyen and Anna Vu
+            Created by Henry and Anna Vu
           </span>
         </div>
       </div>
